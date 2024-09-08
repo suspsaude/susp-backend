@@ -26,7 +26,7 @@ async def root():
          response_model=list[str],
          )
 async def especialidades():
-    return {"message": "Não implementado ainda!"}
+    return ["Não implementado ainda!"]
 
 @app.get("/unidades", 
          summary="Obtém as unidades próximas a um CEP que atendem uma determinada especialidade",
@@ -34,7 +34,7 @@ async def especialidades():
          response_model=list[dict],
          )
 async def unidades(cep: str, esp: str):
-    return {"message": f"Não implementado ainda! Unidades próximas ao CEP {cep} com especialidade {esp}"}
+    return [{"message": f"Não implementado ainda! Unidades próximas ao CEP {cep} com especialidade {esp}"}]
 
 @app.get("/detalhes",
          summary="Obtém detalhes de uma unidade de saúde a partir do CNES",
