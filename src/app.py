@@ -36,7 +36,7 @@ async def especialidades():
 async def unidades(cep: str, esp: str):
     return [{"message": f"Não implementado ainda! Unidades próximas ao CEP {cep} com especialidade {esp}"}]
 
-@app.get("/detalhes",
+@app.get("/unidades/detalhes",
          summary="Obtém detalhes de uma unidade de saúde a partir do CNES",
          response_description="Objeto com detalhes da unidade de saúde",
          response_model=dict,
