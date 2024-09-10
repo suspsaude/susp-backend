@@ -7,7 +7,7 @@ Endpoints disponíveis:
 
 - `/especialidades`: Retorna a lista de especialidades disponíveis.
 - `/unidades?cep=&esp=`: Retorna a lista de unidades de saúde próximas a um CEP com uma determinada especialidade.
-- `/detalhes?cnes=`: Retorna detalhes de uma unidade de saúde a partir do numero CNES da unidade.
+- `/unidades/detalhes?cnes=`: Retorna detalhes de uma unidade de saúde a partir do numero CNES da unidade.
 """
 
 app = FastAPI(
