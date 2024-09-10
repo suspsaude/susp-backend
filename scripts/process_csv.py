@@ -6,7 +6,7 @@ and the adasus responses must be located at `data/adasus/{cnes}.csv` for each CN
 """
 import pandas as pd
 import sys
-from typing import TypedDict
+from typing import TypedDict, Union
 from pprint import pprint
 import os
 
@@ -58,16 +58,22 @@ class ServiceRecord(TypedDict):
     service: str
     classification: str
 
-def general_info(elasticnes: pd.Series, adasus: pd.Series) -> GeneralInfo:
+def general_info(cnes: int, elasticnes: Union[pd.DataFrame, str], adasus: Union[pd.DataFrame, str]) -> GeneralInfo:
     """Joins the data from a elasticnes dataset row and a adasus request to `/cnes/estabelecimentos/{cnes}`. Both `Series` must have the same `CNES`/`codigo_cnes`.
 
     Args:
-        elasticnes (Series): single row from the elasticnes dataset for the desired CNES
-        adasus (Series): response from the request to `/cnes/estabelecimentos/{cnes}` as a `Series`
+        elasticnes (DataFrame | str): the full elasticnes dataset or the name of the `.csv` file
+        adasus (DataFrame): the response of `/cnes/estabelecimentos/{cnes}` or the name of the `.csv` file
     """
-    
-    assert elasticnes['CNES'] == adasus['codigo_cnes'], "CNES do elasticnes e do adasus são diferentes"
-    
+
+    if isinstance(elasticnes, str):
+        elasticnes = pd.read_csv(elasticnes)
+    if isinstance(adasus, str):
+        adasus = pd.read_csv(adasus, delimiter=';')
+
+    adasus: pd.Series = adasus[adasus['codigo_cnes'] == cnes].iloc[0]
+    elasticnes: pd.Series = elasticnes[elasticnes['CNES'] == cnes].iloc[0]
+        
     return GeneralInfo(
         cnes = elasticnes['CNES'],
         name = elasticnes['NOME FANTASIA'],
@@ -86,17 +92,21 @@ def general_info(elasticnes: pd.Series, adasus: pd.Series) -> GeneralInfo:
         shift = adasus["descricao_turno_atendimento"]
     )
 
-def service_records(elasticnes: pd.DataFrame) -> list[ServiceRecord]: 
+def service_records(elasticnes: Union[pd.DataFrame, str]) -> list[ServiceRecord]: 
     """Filters useful service information from the elasticnes dataset and build a ServiceRecord list.
 
     Args:
-        elasticnes (DataFrame): full "Serviços Especializados" dataset from elasticnes 
+        elasticnes (str): "Serviços Especializados" `.csv` file from elasticnes 
     
     Returns:
         list[ServiceRecord]: lista of ServiceRecord
     """
+    if isinstance(elasticnes, str):
+        data = pd.read_csv(elasticnes)
+    else:
+        data = elasticnes
     
-    services_table = elasticnes[['CNES', 'SERVIÇO', 'SERVIÇO CLASSIFICAÇÃO']]
+    services_table = data[['CNES', 'SERVIÇO', 'SERVIÇO CLASSIFICAÇÃO']]
     services_table.columns = ['cnes', 'service', 'classification']
     services_list = services_table.to_dict(orient='records')
     services_records = [ServiceRecord(**service) for service in services_list]
@@ -117,8 +127,8 @@ if __name__ == "__main__":
         cnes = int(sys.argv[1])
         # Load the data
         adasus = pd.read_csv(f'{script_dir}/data/adasus/{cnes}.csv', delimiter=';')
-        # Row 0 where CNES is `cnes`
-        info = general_info(elasticnes[elasticnes['CNES'] == cnes].iloc[0], adasus.iloc[0])
+
+        info = general_info(cnes, elasticnes, adasus)
         pprint(info)
     
     else:
