@@ -2,6 +2,8 @@ import requests
 import zipfile
 import os
 
+from datetime import datetime
+
 description = """
 This module contains functions to download data from the Brazilian government's open data source 
 and the National Registry of Health Establishments (CNES).
@@ -12,10 +14,14 @@ Available functionalities:
 - Save the data locally in a chosen file.
 """
 
-CNES_URL = "https://cnes.datasus.gov.br/EstatisticasServlet?path=BASE_DE_DADOS_CNES_"
-DEMAS_URL = "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
+CNES_URL = "http://cnes.datasus.gov.br/EstatisticasServlet?path=BASE_DE_DADOS_CNES_"
+ESPEC_FILE_NAME = "tbServicoEspecializado"    # File name for the desired csv from the CNES data .zip
 
-def download_data(url: str) -> bytes:
+DEMAS_URL = "http://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
+
+FETCHER_PATH = os.path.dirname(os.path.realpath(__file__))
+
+def download_data(url: str) -> bytes: 
     """
     Downloads data from a URL and returns the data in bytes.
 
@@ -30,50 +36,51 @@ def download_data(url: str) -> bytes:
 
     return response.content
     
-def save_data(data: bytes, path: str) -> None:
+def save_data(data: bytes, name: str) -> None:
     """
-    Saves the data to a file at the specified path.
+    Saves the data to a file with the desired name in the fetcher folder.
 
     Args:
     data (bytes): Data to be saved
-    path (str): Path of the file where the data will be saved
+    name (str): The desired file name
 
     Returns:
     None
     """
-    with open(path, "wb") as f:
+    with open(f"{FETCHER_PATH}/{name}", "wb") as f:
         f.write(data)
 
-def extract_data(path: str) -> None:
+def unzip_cnes_data(date: str) -> None:
     """
-    Extracts a ZIP file at the specified path into a folder with the same name as the file.
+    Extracts the one desired .csv file in the .zip downloaded from CNES
 
     Args:
-    path (str): Path of the ZIP file to be extracted
+    date (str): Date of the data to be extracted (YYYYMM)
 
     Returns:
     None
     """
-    if not path.endswith('.zip'):
-        raise ValueError("The path must be a ZIP file.")
-    
-    folder_name = os.path.splitext(path)[0]
-    
-    with zipfile.ZipFile(path, 'r') as zip_ref:
-        zip_ref.extractall(folder_name)
+    zip_path = os.path.join(FETCHER_PATH, zip_name)
 
-def clean_directory(path: str = '.') -> None:
+    if not os.path.exists(zip_path):
+        raise ValueError("There isn't any file with the specified name or date.")
+        
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        csv_name = f"{ESPEC_FILE_NAME}.csv"
+        zip_ref.extract(csv_name, FETCHER_PATH)
+
+def clean_directory() -> None:
     """
-    Removes all files and directories in the current folder that do not end with .py.
+    Removes all files and directories in the data folder that doesn't end with .py
 
     Args:
-    path (str): Path of the folder where files and directories will be removed
+    None
 
     Returns:
     None
     """
-    for item in os.listdir(path):
-        item_path = os.path.join(path, item)
+    for item in os.listdir(FETCHER_PATH):
+        item_path = os.path.join(FETCHER_PATH, item)
         
         if os.path.isdir(item_path):
             # Remove directory and all its contents
@@ -88,7 +95,7 @@ def clean_directory(path: str = '.') -> None:
     
 def download_cnes_data(year: int, month: int) -> None:
     """
-    Downloads CNES data for a given year and month and saves it to a file named BASE_DE_DADOS_CNES_YYYYMM.ZIP.
+    Downloads CNES data for a given year and month and saves it to a file named BASE_DE_DADOS_CNES_YYYYMM.ZIP. Extracts the "ServicosEspecializados.csv" file, desired for the database populator. 
 
     Args:
     year (int): Year of the data to be downloaded (2017, 2018, etc.)
@@ -97,7 +104,8 @@ def download_cnes_data(year: int, month: int) -> None:
     Returns:
     None
     """
-    if year < 2017 or year > 2024:
+    currentYear = datetime.now().year
+    if year < 2017 or year > currentYear:
         raise ValueError("Invalid year.")
     if month < 1 or month > 12:
         raise ValueError("Invalid month, please provide a month between 1 and 12.")
@@ -109,12 +117,13 @@ def download_cnes_data(year: int, month: int) -> None:
     if not data:
         raise ValueError("Download error: failed to download data.")
 
-    save_data(data, f"BASE_DE_DADOS_CNES_{date}.zip")
-    extract_data(f"BASE_DE_DADOS_CNES_{date}.zip")
+    zip_name = f"BASE_DE_DADOS_CNES_{date}.zip"
+    save_data(data, zip_name)
+    extract_cnes_data(zip_name, date)
 
 def download_stablishments(cnes_codes: list) -> None:
     """
-    Downloads data from the Brazilian government's open data source and saves it to a file with the stablishment name.
+    Downloads data from the Brazilian government's open data source and saves it to a json file named after the stablishment code in the current directory.
 
     Returns:
     None
@@ -125,4 +134,11 @@ def download_stablishments(cnes_codes: list) -> None:
         if not data:
             raise ValueError("Download error: failed to download data.")
 
-        save_data(data, "{code}.csv")
+        save_data(data, f"{code}.json")
+
+def main():
+    download_cnes_data(2024, 1)
+
+if __name__ == '__main__':
+    main()
+    
