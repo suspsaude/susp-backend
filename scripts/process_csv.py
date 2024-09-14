@@ -59,21 +59,20 @@ class ServiceRecord(TypedDict):
     service: str
     classification: str
 
-def general_info(cnes: int, elasticnes: Union[pd.DataFrame, str], adasus: Union[pd.DataFrame, str]) -> GeneralInfo:
+def general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dict, str]) -> GeneralInfo:
     """Joins the data from a elasticnes dataset row and a adasus request to `/cnes/estabelecimentos/{cnes}`. Both `Series` must have the same `CNES`/`codigo_cnes`.
 
     Args:
         elasticnes (DataFrame | str): the full elasticnes dataset or the name of the `.csv` file
-        adasus (DataFrame): the response of `/cnes/estabelecimentos/{cnes}` or the name of the `.csv` file
+        adasus (DataFrame): the response of `/cnes/estabelecimentos/{cnes}` or the name of the `.json` file
     """
 
     if isinstance(elasticnes, str):
         elasticnes = pd.read_csv(elasticnes)
     if isinstance(adasus, str):
-        adasus = pd.read_csv(adasus, delimiter=';')
+        adasus = json.load(open(adasus))
 
-    adasus: pd.Series = adasus[adasus['codigo_cnes'] == cnes].iloc[0]
-    elasticnes: pd.Series = elasticnes[elasticnes['CNES'] == cnes].iloc[0]
+    elasticnes: pd.Series = elasticnes[elasticnes['CNES'] == adasus['codigo_cnes']].iloc[0]
         
     return GeneralInfo(
         cnes = elasticnes['CNES'],
