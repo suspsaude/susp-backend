@@ -6,9 +6,9 @@ and the adasus responses must be located at `data/adasus/{cnes}.csv` for each CN
 """
 import pandas as pd
 import sys
+import json
 from typing import TypedDict, Union
 from pprint import pprint
-import os
 import argparse
 
 class GeneralInfo(TypedDict):
@@ -113,41 +113,3 @@ def service_records(elasticnes: Union[pd.DataFrame, str]) -> list[ServiceRecord]
     services_records = [ServiceRecord(**service) for service in services_list]
     
     return services_records
-    
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog='process_csv', 
-                                     description="""Process the dataset from csv files.
-                                     
-                                     Can extract general info for a given CNES or all service records from csv files obtained 
-                                     from elasticnes and API Dados Abertos SUS.
-
-                                     Can be used as a standalone script or as a module providing the general_info and service_records functions.""")
-    
-    parser.add_argument('mode', type=str, help='Mode to run the script', choices=['general_info', 'service_records'])
-    parser.add_argument('-c', '--cnes', type=int, help='CNES code to get the general info')
-    parser.add_argument('-e', '--elasticnes', type=str, help='Path to the elasticnes csv file')
-    parser.add_argument('-a', '--adasus', type=str, help='Path to the adasus csv file')
-    
-    args = parser.parse_args()
-    
-    if args.mode == 'general_info': 
-        if not args.elasticnes:
-            print('Please provide the path to the elasticnes csv file (via -e | --elasticnes)')
-            sys.exit(1)
-
-        records = service_records(args.elasticnes)
-        pprint(records)
-        
-    elif args.mode == 'service_records':
-        if not args.cnes or not args.elasticnes or not args.adasus:
-            print('Please provide the CNES code (via -c | --cnes) and the paths to the elasticnes (via -e | --elasticnes) and adasus (via -a | --adasus) csv files')
-            sys.exit(1)
-
-        info = general_info(args.cnes, args.elasticnes, args.adasus)
-        pprint(info)
-    
-    else:
-        print(f'Invalid mode "{args.mode}"! Valid modes are "general_info" and "service_records"')
-        sys.exit(1)
