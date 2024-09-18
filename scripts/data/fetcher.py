@@ -1,6 +1,6 @@
-import requests
 import zipfile
 import os
+import subprocess
 
 from datetime import datetime
 
@@ -23,7 +23,7 @@ FETCHER_PATH = os.path.dirname(os.path.realpath(__file__))
 
 def download_data(url: str) -> bytes: 
     """
-    Downloads data from a URL and returns the data in bytes.
+    Downloads data from a URL using curl and returns the data in bytes.
 
     Args:
     url (str): URL of the file to be downloaded
@@ -31,14 +31,12 @@ def download_data(url: str) -> bytes:
     Returns:
     bytes: Downloaded data
     """
-    response = requests.get(url)
-    response.raise_for_status()
-
-    return response.content
+    result = subprocess.run(['curl', '-s', url], capture_output=True, check=True)
+    return result.stdout
     
 def save_data(data: bytes, name: str) -> None:
     """
-    Saves the data to a file with the desired name in the fetcher folder.
+    Saves the data to a file with the desired name in the fetcher folder using curl.
 
     Args:
     data (bytes): Data to be saved
@@ -47,7 +45,8 @@ def save_data(data: bytes, name: str) -> None:
     Returns:
     None
     """
-    with open(f"{FETCHER_PATH}/{name}", "wb") as f:
+    file_path = os.path.join(FETCHER_PATH, name)
+    with open(file_path, 'wb') as f:
         f.write(data)
 
 def unzip_cnes_data(date: str) -> None:
@@ -119,7 +118,7 @@ def download_cnes_data(year: int, month: int) -> None:
 
     zip_name = f"BASE_DE_DADOS_CNES_{date}.zip"
     save_data(data, zip_name)
-    extract_cnes_data(zip_name, date)
+    unzip_cnes_data(zip_name, date)
 
 def download_stablishments(cnes_codes: list) -> None:
     """
@@ -141,4 +140,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
