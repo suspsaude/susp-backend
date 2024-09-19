@@ -134,9 +134,3 @@ def download_stablishments(cnes_codes: list) -> None:
             raise ValueError("Download error: failed to download data.")
 
         save_data(data, f"{code}.json")
-
-def main():
-    download_cnes_data(2024, 1)
-
-if __name__ == '__main__':
-    main()
