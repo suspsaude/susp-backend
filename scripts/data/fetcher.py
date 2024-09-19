@@ -21,7 +21,7 @@ DEMAS_URL = "http://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
 
 FETCHER_PATH = os.path.dirname(os.path.realpath(__file__))
 
-def download_data(url: str) -> bytes: 
+def __download_data(url: str) -> bytes: 
     """
     Downloads data from a URL using curl and returns the data in bytes.
 
@@ -34,7 +34,7 @@ def download_data(url: str) -> bytes:
     result = subprocess.run(['curl', '-s', url], capture_output=True, check=True)
     return result.stdout
     
-def save_data(data: bytes, name: str) -> None:
+def __save_data(data: bytes, name: str) -> None:
     """
     Saves the data to a file with the desired name in the fetcher folder using curl.
 
@@ -49,7 +49,7 @@ def save_data(data: bytes, name: str) -> None:
     with open(file_path, 'wb') as f:
         f.write(data)
 
-def unzip_cnes_data(date: str) -> None:
+def __unzip_cnes_data(date: str) -> None:
     """
     Extracts the one desired .csv file in the .zip downloaded from CNES
 
@@ -59,7 +59,7 @@ def unzip_cnes_data(date: str) -> None:
     Returns:
     None
     """
-    zip_path = os.path.join(FETCHER_PATH, zip_name)
+    zip_path = os.path.join(FETCHER_PATH, f"BASE_DE_DADOS_CNES_{date}.zip")
 
     if not os.path.exists(zip_path):
         raise ValueError("There isn't any file with the specified name or date.")
@@ -111,14 +111,14 @@ def download_cnes_data(year: int, month: int) -> None:
 
     date = f"{year}{month:02d}"  # Adds a leading zero to the month number if necessary
     url = f"{CNES_URL}{date}.ZIP"
-    data = download_data(url)
+    data = __download_data(url)
 
     if not data:
         raise ValueError("Download error: failed to download data.")
 
     zip_name = f"BASE_DE_DADOS_CNES_{date}.zip"
-    save_data(data, zip_name)
-    unzip_cnes_data(zip_name, date)
+    __save_data(data, zip_name)
+    __unzip_cnes_data(zip_name, date)
 
 def download_stablishments(cnes_codes: list) -> None:
     """
@@ -128,9 +128,9 @@ def download_stablishments(cnes_codes: list) -> None:
     None
     """
     for code in cnes_codes:
-        data = download_data(f"{DEMAS_URL}{code}")
+        data = __download_data(f"{DEMAS_URL}{code}")
 
         if not data:
             raise ValueError("Download error: failed to download data.")
 
-        save_data(data, f"{code}.json")
+        __save_data(data, f"{code}.json")
