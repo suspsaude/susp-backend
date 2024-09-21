@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Script to process the CSV files from the CNES dataset (Elasticnes and API
 Dados Abertos SUS).
 
