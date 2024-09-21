@@ -22,7 +22,7 @@ ESPEC_FILE_NAME = "tbServicoEspecializado"
 
 DEMAS_URL = "http://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
 
-FETCHER_PATH = os.path.dirname(os.path.realpath(__file__))
+FETCHER_PATH = f"{os.path.dirname(os.path.realpath(__file__))}/cache"
 
 
 def __download_data(url: str) -> bytes:
@@ -52,6 +52,9 @@ def __save_data(data: bytes, name: str) -> None:
     Returns:
     None
     """
+    if not os.path.exists(FETCHER_PATH):
+        os.makedirs(FETCHER_PATH)
+
     file_path = os.path.join(FETCHER_PATH, name)
     with open(file_path, 'wb') as f:
         f.write(data)
