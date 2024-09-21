@@ -7,11 +7,8 @@ elasticnes Serviços Especializados must be located at `data/elasticnes.csv` and
 the adasus responses must be located at `data/adasus/{cnes}.csv` for each CNES.
 """
 import pandas as pd
-import sys
 import json
 from typing import TypedDict, Union
-from pprint import pprint
-import argparse
 
 
 class GeneralInfo(TypedDict):
