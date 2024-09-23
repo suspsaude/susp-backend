@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker
 from src.db.tables import Base, GeneralInfo, ServiceRecord
 from scripts.fetcher import DATA_PATH, ESPEC_FILE_NAME 
 from scripts.fetcher import download_cnes_data, download_stablishment, clean_cache
-from scripts.process_sus_data import general_info, service_records
+from scripts.process_sus_data import process_general_info, process_service_records
 
 from datetime import datetime
 
@@ -66,8 +66,8 @@ def populate_general_info() -> None:
 
     for cnes_code in elasticnes['CNES']:
         download_stablishment(cnes_code)
-        GeneralInfo = general_info(elasticnes, f"{DATA_PATH}/{cnes_code}.json")
-        populate_db_from_object(GeneralInfo)
+        general_info = process_general_info(elasticnes, f"{DATA_PATH}/{cnes_code}.json")
+        populate_db_from_object(general_info)
 
 
 def populate_service_records() -> None:
@@ -80,8 +80,8 @@ def populate_service_records() -> None:
     Returns:
     None
     """
-    ServiceRecords = service_records(f"{DATA_PATH}{ESPEC_FILE_NAME}")
-    for record in ServiceRecords:
+    records = process_service_records(f"{DATA_PATH}{ESPEC_FILE_NAME}")
+    for record in records:
         populate_db_from_object(record)
 
 def parse_args() -> argparse.Namespace:
@@ -109,4 +109,4 @@ if __name__ == '__main__':
     populate_service_records()
     populate_general_info(args.year, args.month)
 
-    # clean_cache()
+    clean_cache()
