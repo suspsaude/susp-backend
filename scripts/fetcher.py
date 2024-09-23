@@ -137,7 +137,7 @@ def download_cnes_data(year: int, month: int) -> None:
     __unzip_cnes_data(zip_name, date)
 
 
-def download_stablishments(cnes_codes: list) -> None:
+def download_stablishment(cnes_code: int) -> None:
     """
     Downloads data from the Brazilian government's open data source and returns
     it in a JSON format.
@@ -145,10 +145,9 @@ def download_stablishments(cnes_codes: list) -> None:
     Returns:
     None
     """
-    for code in cnes_codes:
-        data = __download_data(f"{DEMAS_URL}{code}")
+    data = __download_data(f"{DEMAS_URL}{cnes_code}")
 
-        if not data:
-            raise ValueError("Download error: failed to download data.")
+    if not data:
+        raise ValueError("Download error: failed to download data.")
 
-        __save_data(data, f"{code}.json")
+    __save_data(data, f"{cnes_code}.json")
