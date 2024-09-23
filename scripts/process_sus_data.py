@@ -14,7 +14,7 @@ import argparse
 
 from src.db.tables import GeneralInfo, ServiceRecord
 
-def general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dict, str]) -> GeneralInfo:
+def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dict, str]) -> GeneralInfo:
     """Joins the data from a elasticnes dataset row and a adasus request to
     `/cnes/estabelecimentos/{cnes}`. Both `Series` must have the same
     `CNES`/`codigo_cnes`.
@@ -51,7 +51,7 @@ def general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dict, str])
     )
 
 
-def service_records(elasticnes: Union[pd.DataFrame, str]) -> list[ServiceRecord]:
+def process_service_records(elasticnes: Union[pd.DataFrame, str]) -> list[ServiceRecord]:
     """Filters useful service information from the elasticnes dataset and build
     a ServiceRecord list.
 
