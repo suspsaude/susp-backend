@@ -1,5 +1,6 @@
 import os
 import argparse
+import pandas as pd
 
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -7,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 
 from src.db.tables import Base, GeneralInfo, ServiceRecord
 from scripts.fetcher import DATA_PATH, ESPEC_FILE_NAME 
-from scripts.fetcher import download_cnes_data, download_stablishments
+from scripts.fetcher import download_cnes_data, download_stablishment, clean_cache
 from scripts.process_sus_data import general_info, service_records
 
 from datetime import datetime
@@ -51,18 +52,23 @@ def populate_db_from_object(obj: object) -> None:
     session.add(obj)
     session.commit()
 
-def populate_general_info(year: int = datetime.now().year, month: int = datetime.now().month) -> None:
+def populate_general_info() -> None:
     """
     Populates the database with the general info data from the CNES API.
     
     Args:
-    year (int): Year of the data to be downloaded (2017, 2018, etc.)
-    month (int): Month of the data to be downloaded (1 to 12)
+    None
     
     Returns:
     None
     """
-    download_cnes_data(year, month)
+    elasticnes = pd.read_csv(f"{DATA_PATH}{ESPEC_FILE_NAME}")
+
+    for cnes_code in elasticnes['CNES']:
+        download_stablishment(cnes_code)
+        GeneralInfo = general_info(elasticnes, f"{DATA_PATH}/{cnes_code}.json")
+        populate_db_from_object(GeneralInfo)
+
 
 def populate_service_records() -> None:
     """
@@ -74,7 +80,7 @@ def populate_service_records() -> None:
     Returns:
     None
     """
-    ServiceRecords = service_records(ESPEC_FILE_NAME)
+    ServiceRecords = service_records(f"{DATA_PATH}{ESPEC_FILE_NAME}")
     for record in ServiceRecords:
         populate_db_from_object(record)
 
@@ -99,3 +105,8 @@ if __name__ == '__main__':
     args = parse_args()
 
     download_cnes_data(args.year, args.month)
+
+    populate_service_records()
+    populate_general_info(args.year, args.month)
+
+    # clean_cache()
