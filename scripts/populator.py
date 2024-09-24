@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from src.db.tables import Base, GeneralInfo, ServiceRecord
+from src.db.tables import Base, GeneralInfo, ServiceRecord, MedicalService
 from scripts.fetcher import DATA_PATH, ESPEC_FILE_NAME 
 from scripts.fetcher import download_cnes_data, download_stablishment, clean_cache
 from scripts.process_sus_data import process_general_info, process_service_records
@@ -36,6 +36,9 @@ engine = create_engine(DB_URL)
 SessionLocal = sessionmaker(bind = engine)
 session = SessionLocal()
 
+# ELASTICNES .CSV pandas dataframe
+elasticnes = None
+
 # If tabelas doesn't exist, creates it
 Base.metadata.create_all(bind=engine)
 
@@ -62,17 +65,44 @@ def populate_general_info() -> None:
     Returns:
     None
     """
-    elasticnes = pd.read_csv(f"{DATA_PATH}{ESPEC_FILE_NAME}")
-
     for cnes_code in elasticnes['CNES']:
         download_stablishment(cnes_code)
         general_info = process_general_info(elasticnes, f"{DATA_PATH}/{cnes_code}.json")
         populate_db_from_object(general_info)
 
+def filter_dataframe() -> pd.DataFrame:
+    """
+    Filters the dataframe to remove unnecessary rows.
+
+    Args:
+    None
+
+    Returns:
+    elasticnes (DataFrame): the elasticnes.csv dataframe
+    """
+    filtered_data = elasticnes[elastcines['MUNICÍPIO'] == 'SAO PAULO']
+
+    return filtered_data
+
+def populate_medical_services() -> None:
+    """
+    Populates the database with the medical services data from the CNES API.
+
+    Args:
+    None
+
+    Returns:
+    None
+    """
+    medical_services = process_medical_services(elasticnes)
+
+    for service in medical_service:
+        populate_db_from_object(service)
 
 def populate_service_records() -> None:
     """
-    Populates the database with the service records data from the CNES API.
+    Populates the database with the service records data from the CNES API and
+    returns a set of medical services.
     
     Args:
     None
@@ -80,7 +110,8 @@ def populate_service_records() -> None:
     Returns:
     None
     """
-    records = process_service_records(f"{DATA_PATH}{ESPEC_FILE_NAME}")
+    records = process_service_records(elasticnes)
+
     for record in records:
         populate_db_from_object(record)
 
@@ -106,7 +137,14 @@ if __name__ == '__main__':
 
     download_cnes_data(args.year, args.month)
 
+    # Reads .csv from ELASTICNES to a dataframe
+    elasticnes = pd.read_csv(f"{DATA_PATH}{ESPEC_FILE_NAME}")
+
+    # Filters dataframe only for São Paulo city
+    elasticnes = filter_dataframe()
+
     populate_service_records()
-    populate_general_info(args.year, args.month)
+    populate_medical_services()
+    populate_general_info()
 
     clean_cache()
