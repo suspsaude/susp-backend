@@ -12,7 +12,7 @@ from typing import TypedDict, Union
 from pprint import pprint
 import argparse
 
-from src.db.tables import GeneralInfo, ServiceRecord
+from src.db.tables import GeneralInfo, ServiceRecord, MedicalService
 
 def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dict, str]) -> GeneralInfo:
     """Joins the data from a elasticnes dataset row and a adasus request to
@@ -35,8 +35,8 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
     return GeneralInfo(
         cnes=elasticnes['CNES'],
         name=elasticnes['NOME FANTASIA'],
-        city=elasticnes['MUNICÍPIO'],
-        state=elasticnes['UF'],
+        # city=elasticnes['MUNICÍPIO'],
+        # state=elasticnes['UF'],
         kind=elasticnes['TIPO NOVO DO ESTABELECIMENTO'],
         cep=adasus["codigo_cep_estabelecimento"],
         cnpj=adasus["numero_cnpj"],
@@ -50,6 +50,21 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
         shift=adasus["descricao_turno_atendimento"]
     )
 
+def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> set[MedicalService]:
+    """
+    """
+    if isinstance(elastcines, str):
+        data = pd.read_csv(elasticnes)
+    else:
+        data = elasticnes
+
+    medical_services = set()
+
+    for service in data['service']:
+        medical_services.add(service)
+
+    return medical_services
+    
 
 def process_service_records(elasticnes: Union[pd.DataFrame, str]) -> list[ServiceRecord]:
     """Filters useful service information from the elasticnes dataset and build
