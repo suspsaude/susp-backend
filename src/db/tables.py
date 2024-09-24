@@ -9,8 +9,8 @@ class GeneralInfo(Base):
     Args:
         cnes (int): CNES code
         name (str): Fantasy name of the establishment
-        city (str): City where the establishment is located
-        state (str): State where the establishment is located
+        city (str): City where the establishment is located - Optional (filters to SP)
+        state (str): State where the establishment is located - Optional (filters to SP)
         kind (str): Kind of establishment (TIPO NOVO DO ESTABELECIMENTO)
         cep (int): CEP of the establishment
         cnpj (int): CNPJ of the establishment
@@ -25,32 +25,46 @@ class GeneralInfo(Base):
     """
     _tablename_ = 'general_infos'
 
-    cnes: int
-    name: str
-    city: str
-    state: str
-    kind: str
-    cep: int
-    cnpj: int 
-    address: str
-    number: str
-    district: str
-    telephone: str
-    latitude: float
-    longitude: float
-    email: str
-    shift: str
+    cnes: Column(int, primary_key=True)
+    name: Column(str)
+    # city: Column(str)
+    # state: Column(str)
+    kind: Column(str)
+    cep: Column(int)
+    cnpj: Column(int) 
+    address: Column(str)
+    number: Column(str)
+    district: Column(str)
+    telephone: Column(str)
+    latitude: Column(float)
+    longitude: Column(float)
+    email: Column(str)
+    shift: Column(str)
+    
+class MedicalService(Base):
+    """MedicalService for a type of service.
+
+    Args:
+        id (int): Medical service id
+        name (str): Description of the medical expertise
+    """
+    __tablename__ = 'medical_services'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
 
 class ServiceRecord(Base):
     """ServiceRecord for a given CNES.
     
     Args:
         cnes (int): CNES code
-        servico (str): Service provided by the establishment
-        classificacao (str): Classification of the service
+        service (int): ID of the service provided by the establishment (foreign key to MedicalService)
+        classification (str): Classification of the service
     """
-    _tablename_ = 'service_records'
+    __tablename__ = 'service_records'
     
-    cnes: int
-    service: str
-    classification: str
+    cnes = Column(Integer, primary_key=True)
+    service = Column(Integer, ForeignKey('medical_services.id'))
+    classification = Column(String)
+    
+    medical_service = relationship("MedicalService")
