@@ -26,10 +26,10 @@ Available functionalities:
 
 DB_USER = os.getenv("DBUSER")
 DB_NAME = os.getenv("DBNAME")
-DB_PASSWORD = os.getenv("DBPASSWORD")
+DB_PASSWORD = os.getenv("DBPASS")
 DB_ADDR = os.getenv("DBADDR")
 
-DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}"
+DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DBADDR}:5432/{DB_NAME}"
 
 engine = create_engine(DB_URL)
 
