@@ -27,7 +27,6 @@ Available functionalities:
 DB_USER = os.getenv("DBUSER")
 DB_NAME = os.getenv("DBNAME")
 DB_PASSWORD = os.getenv("DBPASSWORD")
-DB_ADDR = os.getenv("DBADDR")
 
 DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}"
 
