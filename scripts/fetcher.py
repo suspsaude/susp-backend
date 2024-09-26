@@ -18,11 +18,11 @@ Available functionalities:
 CNES_URL = "http://cnes.datasus.gov.br/EstatisticasServlet?path=BASE_DE_DADOS_CNES_"
 
 # File name for the desired csv from the CNES data .zip
-ESPEC_FILE_NAME = "tbServicoEspecializado.csv"
+ESPEC_FILE_NAME = "tbServicoEspecializado"
 
 DEMAS_URL = "http://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
 
-DATA_PATH = "/cache/"
+DATA_PATH = os.getenv("PYTHONPATH") + "/cache/"
 
 
 def __download_data(url: str) -> bytes:
@@ -39,11 +39,9 @@ def __download_data(url: str) -> bytes:
                             capture_output=True, check=True)
     return result.stdout
 
-
 def __save_data(data: bytes, name: str) -> None:
     """
-    Saves the data to a file with the desired name in the fetcher folder using
-    curl.
+    Saves the data to a file with the desired name in the fetcher folder.
 
     Args:
     data (bytes): Data to be saved
@@ -51,13 +49,20 @@ def __save_data(data: bytes, name: str) -> None:
 
     Returns:
     None
-    """
-    if not os.path.exists(DATA_PATH):
-        os.makedirs(DATA_PATH)
 
-    file_path = os.path.join(DATA_PATH, name)
-    with open(file_path, 'wb') as f:
-        f.write(data)
+    Raises:
+    OSError: If there is an error creating the directory or writing the file
+    """
+    try:
+        if not os.path.exists(DATA_PATH):
+            os.makedirs(DATA_PATH)
+
+        file_path = os.path.join(DATA_PATH, name)
+        with open(file_path, 'wb') as f:
+            f.write(data)
+    except OSError as e:
+        print(f"Error saving data to {file_path}: {e}")
+        raise
 
 
 def __unzip_cnes_data(date: str) -> None:
@@ -77,7 +82,7 @@ def __unzip_cnes_data(date: str) -> None:
             "There isn't any file with the specified name or date.")
 
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extract(ESPEC_FILE_NAME, DATA_PATH)
+        zip_ref.extract(f"{ESPEC_FILE_NAME}{date}.csv", DATA_PATH)
 
 
 def clean_cache() -> None:
@@ -132,9 +137,8 @@ def download_cnes_data(year: int, month: int) -> None:
     if not data:
         raise ValueError("Download error: failed to download data.")
 
-    zip_name = f"BASE_DE_DADOS_CNES_{date}.zip"
-    __save_data(data, zip_name)
-    __unzip_cnes_data(zip_name, date)
+    __save_data(data, f"BASE_DE_DADOS_CNES_{date}.zip")
+    __unzip_cnes_data(date)
 
 
 def download_stablishment(cnes_code: int) -> None:
