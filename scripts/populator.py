@@ -27,9 +27,9 @@ Available functionalities:
 DB_USER = os.getenv("DBUSER")
 DB_NAME = os.getenv("DBNAME")
 DB_PASSWORD = os.getenv("DBPASS")
-DB_ADDR = os.getenv("DBADDR")
+DB_HOST = os.getenv("POSTGRES_HOST")
 
-DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DBADDR}:5432/{DB_NAME}"
+DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:5432/{DB_NAME}"
 
 engine = create_engine(DB_URL)
 
@@ -132,11 +132,10 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == '__main__':
     args = parse_args()
-
     download_cnes_data(args.year, args.month)
 
     # Reads .csv from ELASTICNES to a dataframe
-    elasticnes = pd.read_csv(f"{DATA_PATH}{ESPEC_FILE_NAME}")
+    elasticnes = pd.read_csv(f"{DATA_PATH}{ESPEC_FILE_NAME}{args.year}{args.month:02d}.csv")
 
     # Filters dataframe only for São Paulo city
     elasticnes = filter_dataframe(elasticnes)
