@@ -7,9 +7,9 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 from src.db.tables import Base, GeneralInfo, ServiceRecord, MedicalService
-from scripts.fetcher import DATA_PATH, ESPEC_FILE_NAME 
+from scripts.fetcher import DATA_PATH
 from scripts.fetcher import download_cnes_data, download_stablishment, clean_cache
-from scripts.process_sus_data import process_general_info, process_service_records
+from scripts.process_sus_data import process_general_info, process_service_records, process_medical_services
 
 from datetime import datetime
 
@@ -24,9 +24,9 @@ Available functionalities:
 - Populate the database with data from a specific year and month.
 """
 
-DB_USER = os.getenv("DBUSER")
-DB_NAME = os.getenv("DBNAME")
-DB_PASSWORD = os.getenv("DBPASS")
+DB_USER = os.getenv("POSTGRES_USER")
+DB_NAME = os.getenv("POSTGRES_DB")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_HOST = os.getenv("POSTGRES_HOST")
 
 DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:5432/{DB_NAME}"
@@ -78,7 +78,7 @@ def filter_dataframe(elasticnes: pd.DataFrame) -> pd.DataFrame:
     Returns:
     elasticnes (DataFrame): the elasticnes.csv filtered dataframe
     """
-    filtered_data = elasticnes[elastcines['MUNICÍPIO'] == 'SAO PAULO']
+    filtered_data = elasticnes[elasticnes['MUNICÍPIO'] == 'SAO PAULO']
 
     return filtered_data
 
@@ -95,7 +95,9 @@ def populate_medical_services(elasticnes: pd.DataFrame) -> None:
     medical_services = process_medical_services(elasticnes)
 
     for service in medical_services:
-        populate_db_from_object(service)
+        service = service.split(maxsplit=1)
+        medical_service = MedicalService(id=int(service[0]), name=service[1])
+        populate_db_from_object(medical_service)
 
 def populate_service_records(elasticnes: pd.DataFrame) -> None:
     """
@@ -131,17 +133,14 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 if __name__ == '__main__':
-    args = parse_args()
-    download_cnes_data(args.year, args.month)
+    #args = parse_args()
+    #download_cnes_data()
 
     # Reads .csv from ELASTICNES to a dataframe
-    elasticnes = pd.read_csv(f"{DATA_PATH}{ESPEC_FILE_NAME}{args.year}{args.month:02d}.csv")
+    elasticnes = pd.read_csv(f"{DATA_PATH}DADOS_CNES.csv")
 
-    # Filters dataframe only for São Paulo city
-    elasticnes = filter_dataframe(elasticnes)
-
-    populate_service_records(elasticnes)
     populate_medical_services(elasticnes)
+    populate_service_records(elasticnes)
     populate_general_info(elasticnes)
 
     clean_cache()

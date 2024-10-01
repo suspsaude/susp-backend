@@ -15,14 +15,11 @@ Available functionalities:
 - Save the data locally in a chosen file.
 """
 
-CNES_URL = "http://cnes.datasus.gov.br/EstatisticasServlet?path=BASE_DE_DADOS_CNES_"
-
-# File name for the desired csv from the CNES data .zip
-ESPEC_FILE_NAME = "tbServicoEspecializado"
+CNES_URL = "https://elasticnes.saude.gov.br/fb40c0bc-b7fa-42a1-99d0-496b1b579b26"
 
 DEMAS_URL = "http://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
 
-DATA_PATH = os.getenv("PYTHONPATH") + "/cache/"
+DATA_PATH = os.getenv("PYTHONPATH") + "/data/"
 
 
 def __download_data(url: str) -> bytes:
@@ -108,8 +105,15 @@ def clean_cache() -> None:
         else:
             os.remove(item_path)
 
+def download_cnes_data() -> None:
+    data = __download_data(CNES_URL)
 
-def download_cnes_data(year: int, month: int) -> None:
+    if not data:
+        raise ValueError("Download error: failed to download data.")
+
+    __save_data(data, "DADOS_CNES.csv")
+
+def download_cnes_data_old(year: int, month: int) -> None:
     """
     Downloads CNES data for a given year and month and saves it to a file named
     BASE_DE_DADOS_CNES_YYYYMM.ZIP. Extracts the "ServicosEspecializados.csv"

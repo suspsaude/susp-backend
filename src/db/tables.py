@@ -51,7 +51,7 @@ class MedicalService(Base):
     """
     __tablename__='medical_services'
 
-    id=Column(Integer, primary_key=True, autoincrement=True)
+    id=Column(Integer, primary_key=True)
     name=Column(String)
 
 class ServiceRecord(Base):
@@ -60,12 +60,15 @@ class ServiceRecord(Base):
     Args:
         cnes (Integer): CNES code
         service (Integer): ID of the service provided by the establishment (foreign key to MedicalService)
+        description (String): Service description
         classification (String): Classification of the service
     """
     __tablename__='service_records'
     
-    cnes=Column(Integer, primary_key=True)
+    id=Column(Integer, primary_key=True, autoincrement=True)
+    cnes=Column(Integer)
     service=Column(Integer, ForeignKey('medical_services.id'))
+    #description=Column(String)
     classification=Column(String)
     
     medical_service=relationship("MedicalService")

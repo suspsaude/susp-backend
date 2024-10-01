@@ -53,14 +53,14 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
 def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> set[MedicalService]:
     """
     """
-    if isinstance(elastcines, str):
+    if isinstance(elasticnes, str):
         data = pd.read_csv(elasticnes)
     else:
         data = elasticnes
 
     medical_services = set()
 
-    for service in data['service']:
+    for service in data['SERVIÇO']:
         medical_services.add(service)
 
     return medical_services
@@ -84,6 +84,11 @@ def process_service_records(elasticnes: Union[pd.DataFrame, str]) -> list[Servic
     services_table = data[['CNES', 'SERVIÇO', 'SERVIÇO CLASSIFICAÇÃO']]
     services_table.columns = ['cnes', 'service', 'classification']
     services_list = services_table.to_dict(orient='records')
-    services_records = [ServiceRecord(**service) for service in services_list]
+    services_records = [ServiceRecord(
+        cnes = service["cnes"], 
+        service = int(service["service"].split(maxsplit=1)[0]), 
+        #description = service["service"].split(maxsplit=1)[1],
+        classification = service["classification"]
+        ) for service in services_list]
 
     return services_records
