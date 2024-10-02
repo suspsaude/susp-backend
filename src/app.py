@@ -16,10 +16,10 @@ Endpoints disponíveis:
 - `/unidades/detalhes?cnes=`: Retorna detalhes de uma unidade de saúde a partir do numero CNES da unidade.
 """
 
-DB_USER = os.getenv("DBUSER")
-DB_NAME = os.getenv("DBNAME")
-DB_PASSWORD = os.getenv("DBPASSWORD")
-DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@localhost:5432/{DB_NAME}"
+DB_USER = os.getenv("POSTGRES_USER")
+DB_NAME = os.getenv("POSTGRES_DB")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@db:5432/{DB_NAME}"
 
 app = FastAPI(
     title="SUSP",
