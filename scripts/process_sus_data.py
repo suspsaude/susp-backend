@@ -33,7 +33,7 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
                                        == adasus['codigo_cnes']].iloc[0]
 
     return GeneralInfo(
-        cnes=elasticnes['CNES'],
+        cnes=elasticnes['CNES'].item(),
         name=elasticnes['NOME FANTASIA'],
         city=elasticnes['MUNICÍPIO'],
         state=elasticnes['UF'],
@@ -50,7 +50,7 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
         shift=adasus["descricao_turno_atendimento"]
     )
 
-def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> set[MedicalService]:
+def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> list[MedicalService]:
     """
     """
     if isinstance(elasticnes, str):
@@ -62,6 +62,8 @@ def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> set[Medica
 
     for service in data['SERVIÇO']:
         medical_services.add(service)
+        
+    medical_services = [MedicalService(id=int(service.split(maxsplit=1)[0]), name=service.split(maxsplit=1)[1]) for service in medical_services]
 
     return medical_services
     
@@ -86,9 +88,8 @@ def process_service_records(elasticnes: Union[pd.DataFrame, str]) -> list[Servic
     services_list = services_table.to_dict(orient='records')
     services_records = [ServiceRecord(
         cnes = service["cnes"], 
-        service = int(service["service"].split(maxsplit=1)[0]), 
-        #description = service["service"].split(maxsplit=1)[1],
-        classification = service["classification"]
+        service = int(service["service"].split(maxsplit=1)[0]),
+        classification = service["classification"].split(maxsplit=1)[1]
         ) for service in services_list]
 
     return services_records

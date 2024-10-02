@@ -63,7 +63,7 @@ def populate_general_info(elasticnes: pd.DataFrame) -> None:
     Returns:
     None
     """
-    for cnes_code in elasticnes['CNES']:
+    for cnes_code in set(elasticnes['CNES']):
         download_stablishment(cnes_code)
         general_info = process_general_info(elasticnes, f"{DATA_PATH}/{cnes_code}.json")
         populate_db_from_object(general_info)
@@ -95,9 +95,7 @@ def populate_medical_services(elasticnes: pd.DataFrame) -> None:
     medical_services = process_medical_services(elasticnes)
 
     for service in medical_services:
-        service = service.split(maxsplit=1)
-        medical_service = MedicalService(id=int(service[0]), name=service[1])
-        populate_db_from_object(medical_service)
+        populate_db_from_object(service)
 
 def populate_service_records(elasticnes: pd.DataFrame) -> None:
     """
@@ -135,12 +133,17 @@ def parse_args() -> argparse.Namespace:
 if __name__ == '__main__':
     #args = parse_args()
     #download_cnes_data()
-
+    
     # Reads .csv from ELASTICNES to a dataframe
+    print("[1] Reading data from file")
     elasticnes = pd.read_csv(f"{DATA_PATH}DADOS_CNES.csv")
 
+    print("[2] Populating medical services")
     populate_medical_services(elasticnes)
+    print("[3] Populating service records")
     populate_service_records(elasticnes)
+    print("[4] Populating general info")
     populate_general_info(elasticnes)
 
+    print("[5] Cleaning cache")
     clean_cache()

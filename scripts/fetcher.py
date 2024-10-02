@@ -17,7 +17,7 @@ Available functionalities:
 
 CNES_URL = "https://elasticnes.saude.gov.br/fb40c0bc-b7fa-42a1-99d0-496b1b579b26"
 
-DEMAS_URL = "http://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
+DEMAS_URL = "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
 
 DATA_PATH = os.getenv("PYTHONPATH") + "/data/"
 
@@ -153,7 +153,9 @@ def download_stablishment(cnes_code: int) -> None:
     Returns:
     None
     """
-    data = __download_data(f"{DEMAS_URL}{cnes_code}")
+    url = f"{DEMAS_URL}{cnes_code}"
+    data = subprocess.run(['curl', '-X', 'GET', url, '-H', 'accept: application/json'],
+                            capture_output=True, check=True).stdout
 
     if not data:
         raise ValueError("Download error: failed to download data.")

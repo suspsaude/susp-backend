@@ -32,6 +32,7 @@ services:
     command: ["fastapi", "dev", "src/app.py", "--port", "8000", "--host", "0.0.0.0"]
     volumes:
       - ./src:/app/src
+      - ./scripts:/app/scripts
 
   db:
     image: postgres:14.2-alpine

@@ -13,8 +13,8 @@ class GeneralInfo(Base):
         city (String): City where the establishment is located - Optional (filters to SP)
         state (String): State where the establishment is located - Optional (filters to SP)
         kind (String): Kind of establishment (TIPO NOVO DO ESTABELECIMENTO)
-        cep (Integer): CEP of the establishment
-        cnpj (Integer): CNPJ of the establishment
+        cep (String): CEP of the establishment
+        cnpj (String): CNPJ of the establishment
         address (String): Address of the establishment
         number (String): Address number of the establishment
         district (String): District of the establishment
@@ -31,8 +31,8 @@ class GeneralInfo(Base):
     city=Column(String)
     state=Column(String)
     kind=Column(String)
-    cep=Column(Integer)
-    cnpj=Column(Integer) 
+    cep=Column(String)
+    cnpj=Column(String) 
     address=Column(String)
     number=Column(String)
     district=Column(String)
