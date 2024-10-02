@@ -27,7 +27,12 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
     if isinstance(elasticnes, str):
         elasticnes = pd.read_csv(elasticnes)
     if isinstance(adasus, str):
-        adasus = json.load(open(adasus))
+        try:
+            adasus = json.load(open(adasus))
+        except Exception as e:
+            print(f"Error loading JSON file {adasus}: {e}")
+            return
+            
 
     elasticnes: pd.Series = elasticnes[elasticnes['CNES']
                                        == adasus['codigo_cnes']].iloc[0]

@@ -10,6 +10,7 @@ from src.db.tables import Base, GeneralInfo, ServiceRecord, MedicalService
 from scripts.fetcher import DATA_PATH
 from scripts.fetcher import download_cnes_data, download_stablishment, clean_cache
 from scripts.process_sus_data import process_general_info, process_service_records, process_medical_services
+from scripts.utils import progress_bar
 
 from datetime import datetime
 
@@ -63,10 +64,24 @@ def populate_general_info(elasticnes: pd.DataFrame) -> None:
     Returns:
     None
     """
-    for cnes_code in set(elasticnes['CNES']):
-        download_stablishment(cnes_code)
+    codes = set(elasticnes['CNES'])
+    total = len(codes)
+    current = 0
+    startedAt = datetime.now()
+    
+    for cnes_code in codes:
+        progress_bar(current, total, suffix=f"Downloading {cnes_code}")
+        while True:
+            try:
+                download_stablishment(cnes_code)
+            except Exception as e:
+                print(f"\nError downloading {cnes_code}, trying again: {e}")
+                continue
+            break
         general_info = process_general_info(elasticnes, f"{DATA_PATH}/{cnes_code}.json")
         populate_db_from_object(general_info)
+        current += 1
+        progress_bar(current, total, startedAt, suffix=cnes_code)
 
 def filter_dataframe(elasticnes: pd.DataFrame) -> pd.DataFrame:
     """
@@ -93,9 +108,15 @@ def populate_medical_services(elasticnes: pd.DataFrame) -> None:
     None
     """
     medical_services = process_medical_services(elasticnes)
+    total = len(medical_services)
+    current = 0
+    startedAt = datetime.now()
 
     for service in medical_services:
         populate_db_from_object(service)
+        current += 1
+        progress_bar(current, total, startedAt, suffix=service.id)
+        
 
 def populate_service_records(elasticnes: pd.DataFrame) -> None:
     """
@@ -109,9 +130,14 @@ def populate_service_records(elasticnes: pd.DataFrame) -> None:
     None
     """
     records = process_service_records(elasticnes)
+    total = len(records)
+    current = 0
+    startedAt = datetime.now()
 
     for record in records:
         populate_db_from_object(record)
+        current += 1
+        progress_bar(current, total, startedAt, suffix=f"{record.cnes} {record.service}")
 
 def parse_args() -> argparse.Namespace:
     """
@@ -139,9 +165,9 @@ if __name__ == '__main__':
     elasticnes = pd.read_csv(f"{DATA_PATH}DADOS_CNES.csv")
 
     print("[2] Populating medical services")
-    populate_medical_services(elasticnes)
+    #populate_medical_services(elasticnes)
     print("[3] Populating service records")
-    populate_service_records(elasticnes)
+    #populate_service_records(elasticnes)
     print("[4] Populating general info")
     populate_general_info(elasticnes)
 
