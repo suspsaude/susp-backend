@@ -57,10 +57,10 @@ def populate_db_from_object(obj: object) -> None:
 def populate_general_info(elasticnes: pd.DataFrame) -> None:
     """
     Populates the database with the general info data from the CNES API.
-    
+
     Args:
     elasticnes (DataFrame): the elasticnes.csv dataframe
-    
+
     Returns:
     None
     """
@@ -68,7 +68,7 @@ def populate_general_info(elasticnes: pd.DataFrame) -> None:
     total = len(codes)
     current = 0
     startedAt = datetime.now()
-    
+
     for cnes_code in codes:
         progress_bar(current, total, suffix=f"Downloading {cnes_code}")
         while True:
@@ -116,16 +116,16 @@ def populate_medical_services(elasticnes: pd.DataFrame) -> None:
         populate_db_from_object(service)
         current += 1
         progress_bar(current, total, startedAt, suffix=service.id)
-        
+
 
 def populate_service_records(elasticnes: pd.DataFrame) -> None:
     """
     Populates the database with the service records data from the CNES API and
     returns a set of medical services.
-    
+
     Args:
     elasticnes (DataFrame): the elasticnes.csv dataframe
-    
+
     Returns:
     None
     """
@@ -142,10 +142,10 @@ def populate_service_records(elasticnes: pd.DataFrame) -> None:
 def parse_args() -> argparse.Namespace:
     """
     Parses the command line arguments.
-    
+
     Args:
     None
-    
+
     Returns:
     args (Namespace): Arguments parsed from the command line
     """
@@ -157,9 +157,11 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 if __name__ == '__main__':
-    #args = parse_args()
-    #download_cnes_data()
-    
+    args = parse_args()
+
+    print("[0] Downloading data")
+    download_cnes_data(args.year, args.month)
+
     # Reads .csv from ELASTICNES to a dataframe
     print("[1] Reading data from file")
     elasticnes = pd.read_csv(f"{DATA_PATH}DADOS_CNES.csv")

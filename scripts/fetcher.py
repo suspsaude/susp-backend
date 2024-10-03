@@ -1,7 +1,8 @@
 import zipfile
 import os
 import subprocess
-
+import requests
+import json
 from datetime import datetime
 
 description = """
@@ -35,6 +36,7 @@ def __download_data(url: str) -> bytes:
     result = subprocess.run(['curl', '-s', url],
                             capture_output=True, check=True)
     return result.stdout
+
 
 def __save_data(data: bytes, name: str) -> None:
     """
@@ -105,44 +107,193 @@ def clean_cache() -> None:
         else:
             os.remove(item_path)
 
-def download_cnes_data() -> None:
-    data = __download_data(CNES_URL)
 
-    if not data:
-        raise ValueError("Download error: failed to download data.")
+def download_cnes_data(year: int, month: int) -> None:
+    currentDate = datetime.now()
+    currentYear = currentDate.year
 
-    __save_data(data, "DADOS_CNES.csv")
+    formattedDate = currentDate.strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3] + 'Z'
+    print(formattedDate)
 
-def download_cnes_data_old(year: int, month: int) -> None:
-    """
-    Downloads CNES data for a given year and month and saves it to a file named
-    BASE_DE_DADOS_CNES_YYYYMM.ZIP. Extracts the "ServicosEspecializados.csv"
-    file, desired for the database populator.
-
-    Args:
-    year (int): Year of the data to be downloaded (2017, 2018, etc.)
-    month (int): Month of the data to be downloaded (1 to 12)
-
-    Returns:
-    None
-    """
-    currentYear = datetime.now().year
     if year < 2017 or year > currentYear:
         raise ValueError("Invalid year.")
     if month < 1 or month > 12:
         raise ValueError(
             "Invalid month, please provide a month between 1 and 12.")
 
-    # Adds a leading zero to the month number if necessary
-    date = f"{year}{month:02d}"
-    url = f"{CNES_URL}{date}.ZIP"
-    data = __download_data(url)
+    url = "https://elasticnes.saude.gov.br/kibana/api/reporting/v1/generate/immediate/csv_searchsource"
 
-    if not data:
-        raise ValueError("Download error: failed to download data.")
+    headers = {
+        "Content-Type": "application/json",
+        "kbn-xsrf": "true"
+    }
 
-    __save_data(data, f"BASE_DE_DADOS_CNES_{date}.zip")
-    __unzip_cnes_data(date)
+    payload = {
+        "browserTimezone": "Etc/GMT-3",
+        "version": "8.8.2",
+        "searchSource": {
+            "query": {
+                "query": "",
+                "language": "kuery"
+            },
+            "fields": [
+                {"field": "COMPETÊNCIA", "include_unmapped": "true"},
+                {"field": "UF", "include_unmapped": "true"},
+                {"field": "CÓDIGO DO MUNICÍPIO", "include_unmapped": "true"},
+                {"field": "MUNICÍPIO", "include_unmapped": "true"},
+                {"field": "CNES", "include_unmapped": "true"},
+                {"field": "NOME FANTASIA", "include_unmapped": "true"},
+                {"field": "TIPO NOVO DO ESTABELECIMENTO",
+                    "include_unmapped": "true"},
+                {"field": "TIPO DO ESTABELECIMENTO", "include_unmapped": "true"},
+                {"field": "SUBTIPO DO ESTABELECIMENTO", "include_unmapped": "true"},
+                {"field": "GESTÃO", "include_unmapped": "true"},
+                {"field": "CONVÊNIO SUS", "include_unmapped": "true"},
+                {"field": "CATEGORIA NATUREZA JURÍDICA", "include_unmapped": "true"},
+                {"field": "SERVIÇO", "include_unmapped": "true"},
+                {"field": "SERVIÇO CLASSIFICAÇÃO", "include_unmapped": "true"},
+                {"field": "SERVIÇO - AMBULATORIAL SUS", "include_unmapped": "true"},
+                {"field": "SERVIÇO - AMBULATORIAL NÃO SUS",
+                    "include_unmapped": "true"},
+                {"field": "SERVIÇO - HOSPITALAR SUS", "include_unmapped": "true"},
+                {"field": "SERVIÇO - HOSPITALAR NÃO SUS",
+                    "include_unmapped": "true"},
+                {"field": "SERVIÇO TERCEIRO", "include_unmapped": "true"},
+                {"field": "STATUS DO ESTABELECIMENTO", "include_unmapped": "true"}
+            ],
+            "index": "f5130dd0-f661-11ec-b6ec-efe6c06beef6",
+            "sort": [{"COMPETÊNCIA": "desc"}],
+            "filter": [
+                {
+                    "meta": {
+                        "index": "f5130dd0-f661-11ec-b6ec-efe6c06beef6",
+                        "params": {},
+                        "field": "COMPETÊNCIA"
+                    },
+                    "query": {
+                        "range": {
+                            "COMPETÊNCIA": {
+                                "format": "strict_date_optional_time",
+                                "gte": "2007-06-30T21:00:00.000Z",
+                                "lte": formattedDate
+                            }
+                        }
+                    }
+                }
+            ],
+            "parent": {
+                "query": {
+                    "query": "",
+                    "language": "kuery"
+                },
+                "highlightAll": True,
+                "filter": [
+                    {
+                        "meta": {
+                            "index": "f5130dd0-f661-11ec-b6ec-efe6c06beef6",
+                            "key": "index_comp.keyword"
+                        },
+                        "query": {
+                            "match_phrase": {
+                                "index_comp.keyword": f"{year}{month:02}"
+                            }
+                        }
+                    },
+                    {
+                        "meta": {
+                            "index": "f5130dd0-f661-11ec-b6ec-efe6c06beef6",
+                            "key": "MUNICÍPIO.keyword"
+                        },
+                        "query": {
+                            "match_phrase": {
+                                "MUNICÍPIO.keyword": "SAO PAULO"
+                            }
+                        }
+                    },
+                    {
+                        "meta": {
+                            "index": "f5130dd0-f661-11ec-b6ec-efe6c06beef6",
+                            "key": "STATUS DO ESTABELECIMENTO.keyword"
+                        },
+                        "query": {
+                            "match_phrase": {
+                                "STATUS DO ESTABELECIMENTO.keyword": "ATIVO"
+                            }
+                        }
+                    },
+                    {
+                        "meta": {
+                            "index": "f5130dd0-f661-11ec-b6ec-efe6c06beef6",
+                            "type": "phrases",
+                            "key": "CATEGORIA NATUREZA JURÍDICA.keyword",
+                            "params": ["PÚBLICO", "SEM FINS LUCRATIVOS"]
+                        },
+                        "query": {
+                            "bool": {
+                                "should": [
+                                    {"match_phrase": {
+                                        "CATEGORIA NATUREZA JURÍDICA.keyword": "PÚBLICO"}},
+                                    {"match_phrase": {
+                                        "CATEGORIA NATUREZA JURÍDICA.keyword": "SEM FINS LUCRATIVOS"}}
+                                ],
+                                "minimum_should_match": 1
+                            }
+                        }
+                    }
+                ],
+                "parent": {
+                    "filter": [
+                        {
+                            "meta": {
+                                "index": "f5130dd0-f661-11ec-b6ec-efe6c06beef6",
+                                "params": {},
+                                "field": "COMPETÊNCIA"
+                            },
+                            "query": {
+                                "range": {
+                                    "COMPETÊNCIA": {
+                                        "format": "strict_date_optional_time",
+                                        "gte": "2007-06-30T21:00:00.000Z",
+                                        "lte": formattedDate
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "columns": [
+            "COMPETÊNCIA",
+            "UF",
+            "CÓDIGO DO MUNICÍPIO",
+            "MUNICÍPIO",
+            "CNES",
+            "NOME FANTASIA",
+            "TIPO NOVO DO ESTABELECIMENTO",
+            "TIPO DO ESTABELECIMENTO",
+            "SUBTIPO DO ESTABELECIMENTO",
+            "GESTÃO",
+            "CONVÊNIO SUS",
+            "CATEGORIA NATUREZA JURÍDICA",
+            "SERVIÇO",
+            "SERVIÇO CLASSIFICAÇÃO",
+            "SERVIÇO - AMBULATORIAL SUS",
+            "SERVIÇO - AMBULATORIAL NÃO SUS",
+            "SERVIÇO - HOSPITALAR SUS",
+            "SERVIÇO - HOSPITALAR NÃO SUS",
+            "SERVIÇO TERCEIRO",
+            "STATUS DO ESTABELECIMENTO"
+        ],
+        "title": "EXTRATO DOS ESTABELECIMENTOS COM SERVIÇOS ESPECIALIZADOS"
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+
+    # Tratar a resposta como bytes, pois é um CSV
+    data = response.content
+
+    __save_data(data, "DADOS_CNES.csv")
 
 
 def download_stablishment(cnes_code: int) -> None:
@@ -155,7 +306,7 @@ def download_stablishment(cnes_code: int) -> None:
     """
     url = f"{DEMAS_URL}{cnes_code}"
     data = subprocess.run(['curl', '-X', 'GET', url, '-H', 'accept: application/json'],
-                            capture_output=True, check=True).stdout
+                          capture_output=True, check=True).stdout
 
     if not data:
         raise ValueError("Download error: failed to download data.")
