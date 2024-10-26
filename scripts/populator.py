@@ -167,9 +167,9 @@ if __name__ == '__main__':
     elasticnes = pd.read_csv(f"{DATA_PATH}DADOS_CNES.csv")
 
     print("[2] Populating medical services")
-    #populate_medical_services(elasticnes)
+    populate_medical_services(elasticnes)
     print("[3] Populating service records")
-    #populate_service_records(elasticnes)
+    populate_service_records(elasticnes)
     print("[4] Populating general info")
     populate_general_info(elasticnes)
 

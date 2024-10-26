@@ -1,4 +1,10 @@
+import os
+
 from fastapi import FastAPI
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from db.tables import Base, MedicalService
 
 description = """
 API para consulta de informações sobre unidades de saúde do SUS para a plataforma SUSP.
@@ -10,11 +16,15 @@ Endpoints disponíveis:
 - `/unidades/detalhes?cnes=`: Retorna detalhes de uma unidade de saúde a partir do numero CNES da unidade.
 """
 
+DB_USER = os.getenv("POSTGRES_USER")
+DB_NAME = os.getenv("POSTGRES_DB")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
+DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@db:5432/{DB_NAME}"
+
 app = FastAPI(
     title="SUSP",
     description=description,
 )
-
 
 @app.get("/")
 async def root():
@@ -26,7 +36,11 @@ async def root():
          response_model=list[str],
          )
 async def especialidades():
-    return ["Não implementado ainda!"]
+    engine = create_engine(DB_URL)
+    session = (sessionmaker(bind=engine))()
+    expertises = session.query(MedicalService.name).distinct().all()
+    
+    return [expertise.tuple()[0] for expertise in expertises]
 
 @app.get("/unidades", 
          summary="Obtém as unidades próximas a um CEP que atendem uma determinada especialidade",
