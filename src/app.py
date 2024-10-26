@@ -44,7 +44,11 @@ async def root():
          response_model=list[str],
          )
 async def especialidades():
-    return ["Não implementado ainda!"]
+    engine = create_engine(DB_URL)
+    session = (sessionmaker(bind=engine))()
+    expertises = session.query(MedicalService.name).distinct().all()
+    
+    return [expertise.tuple()[0] for expertise in expertises]
 
 @app.get("/unidades", 
          summary="Obtém as unidades próximas a um CEP que atendem uma determinada especialidade",
