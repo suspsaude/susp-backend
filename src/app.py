@@ -31,8 +31,8 @@ app = FastAPI(
 )
 
 class UnidadeRequest(BaseModel):
-    cep: str = Field(..., regex=r'^\d{5}-?\d{3}$', description="CEP no formato 00000000")
-    esp: int = Field(..., min_length=1, description="Especialidade médica")
+    cep: str = Field(..., pattern=r'^\d{5}-?\d{3}$', description="CEP no formato 00000000")
+    esp: int = Field(..., description="Especialidade médica")
 
 @app.get("/")
 async def root():
@@ -63,7 +63,7 @@ async def unidades(params: UnidadeRequest = Depends()):
     latitude = address_data["latitude"]
     longitude = address_data["longitude"]
 
-    service_records = session.query(ServiceRecord).filter(ServiceRecord.service == params.esp).all()
+    service_records = session.query(ServiceRecord).filter(ServiceRecord.classification == params.esp).all()
 
     result = []
     for record in service_records:
