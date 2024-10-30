@@ -41,14 +41,30 @@ async def root():
 @app.get("/especialidades", 
          summary="Lista de especialidades disponíveis", 
          response_description="Lista de especialidades",
-         response_model=list[str],
-         )
+         response_model=list[dict],
+         description="""Retorna a lista de especialidades disponíveis para consulta. 
+         Consiste em uma lista de objetos do tipo `{id: [number, number], name: string}`. Onde `id` é o par de identificadores que identifica o SERVIÇO e o SERVIÇO CLASSIFICAÇÃO.
+         Esses identificadores são utilizados como atributos `id` e `cls`, respectivamente, em uma requisição para a rota `/unidades`.
+         """,
+         responses={
+            200: {
+                "description": "Lista de especialidades disponíveis", 
+                "content": {
+                    "application/json": {
+                        "example": [
+                            {"id": [121, 12], "name": "MAMOGRAFIA"},
+                            {"id": [145, 9], "name": "EXAMES MICROBIOLOGICOS"},
+                        ]
+                    }
+                }
+            }
+        })
 async def especialidades():
     engine = create_engine(DB_URL)
     session = (sessionmaker(bind=engine))()
-    expertises = session.query(MedicalService.name).distinct().all()
+    expertises = session.query(MedicalService).all()
     
-    return [expertise.tuple()[0] for expertise in expertises]
+    return [{"id": [expertise.id, expertise.class_id], "name": expertise.classification} for expertise in expertises]
 
 @app.get("/unidades", 
          summary="Obtém as unidades próximas a um CEP que atendem uma determinada especialidade",

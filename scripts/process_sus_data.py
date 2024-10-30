@@ -54,23 +54,36 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
         email=adasus["endereco_email_estabelecimento"],
         shift=adasus["descricao_turno_atendimento"]
     )
-
 def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> list[MedicalService]:
-    """
+    """Takes the elasticnes dataset and filters the medical services from it.
+    A medical service is a tuple of (SERVIÇO, SERVIÇO CLASSIFICAÇÃO).
+    
+    Args:
+        elasticnes (DataFrame | str): the full elasticnes dataset or the name of the `.csv` file
+    Returns:
+        list[MedicalService]: list of unique MedicalService
     """
     if isinstance(elasticnes, str):
         data = pd.read_csv(elasticnes)
     else:
         data = elasticnes
 
-    medical_services = set()
+    medical_services = set([(service['SERVIÇO'], service['SERVIÇO CLASSIFICAÇÃO']) for service in data[['SERVIÇO', 'SERVIÇO CLASSIFICAÇÃO']].to_dict(orient='records')])
 
-    for service in data['SERVIÇO']:
-        medical_services.add(service)
+    processed: list[MedicalService] = []
+    
+    for service in medical_services:
+        [id, serv] = service[0].split(maxsplit=1)
+        [class_id, cls] = service[1].split(maxsplit=1)
         
-    medical_services = [MedicalService(id=int(service.split(maxsplit=1)[0]), name=service.split(maxsplit=1)[1]) for service in medical_services]
+        processed.append(MedicalService(
+            id = int(int(id)),
+            class_id = int(int(class_id)),
+            service = serv,
+            classification = cls
+        ))
 
-    return medical_services
+    return processed
     
 
 def process_service_records(elasticnes: Union[pd.DataFrame, str]) -> list[ServiceRecord]:
@@ -94,7 +107,7 @@ def process_service_records(elasticnes: Union[pd.DataFrame, str]) -> list[Servic
     services_records = [ServiceRecord(
         cnes = service["cnes"], 
         service = int(service["service"].split(maxsplit=1)[0]),
-        classification = service["classification"].split(maxsplit=1)[1]
+        classification = int(service["classification"].split(maxsplit=1)[0])
         ) for service in services_list]
 
     return services_records
