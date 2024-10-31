@@ -23,7 +23,7 @@ DB_NAME = os.getenv("POSTGRES_DB")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
 DB_URL = f"postgresql://{DB_USER}:{DB_PASSWORD}@db:5432/{DB_NAME}"
 
-MAX_DISTANCE = 10
+MAX_UNITIES = 20
 
 app = FastAPI(
     title="SUSP",
@@ -31,8 +31,9 @@ app = FastAPI(
 )
 
 class UnidadeRequest(BaseModel):
-    cep: str = Field(..., pattern=r'^\d{5}-?\d{3}$', description="CEP no formato 00000000")
-    esp: int = Field(..., description="Especialidade médica")
+    cep: str = Field(..., pattern=r'^\d{5}-?\d{3}$', description="CEP no formato 00000-000")
+    srv: int = Field(..., description="Serviço médico")
+    clf: int = Field(..., description="Classificação da especialidade")
 
 @app.get("/")
 async def root():
@@ -70,6 +71,10 @@ async def especialidades():
          summary="Obtém as unidades próximas a um CEP que atendem uma determinada especialidade",
          response_description="Lista de unidades de saúde ordenadas por distância que atendem à especialidade desejada",
          response_model=list[dict],
+         description="""Retorna a lista de unidades de saúde próximas a um CEP que atendem a uma determinada especialidade.
+            A requisição deve conter os parâmetros `cep`, `srv` e `clf`. O parâmetro `cep` deve ser um CEP no formato 00000-000. Os parâmetros `srv` e `clf` são os identificadores do serviço e da classificação da especialidade, respectivamente.
+            A resposta consiste em uma lista de objetos do tipo `{name: string, address: string, type: string, distance: float}`. Onde `name` é o nome da unidade de saúde, `address` é o endereço da unidade, `type` é o tipo da unidade e `distance` é a distância em quilômetros entre o CEP informado e a unidade de saúde.
+            """,
          )
 async def unidades(params: UnidadeRequest = Depends()):
     engine = create_engine(DB_URL)
@@ -79,7 +84,10 @@ async def unidades(params: UnidadeRequest = Depends()):
     latitude = address_data["latitude"]
     longitude = address_data["longitude"]
 
-    service_records = session.query(ServiceRecord).filter(ServiceRecord.classification == params.esp).all()
+    service_records = session.query(ServiceRecord).filter(
+        ServiceRecord.service == params.srv,
+        ServiceRecord.classification == params.clf
+    ).all()
 
     result = []
     for record in service_records:
@@ -90,19 +98,17 @@ async def unidades(params: UnidadeRequest = Depends()):
                 {"latitude": latitude, "longitude": longitude},
                 {"latitude": unit.latitude, "longitude": unit.longitude}
             )
-
-            if distance <= MAX_DISTANCE:
-                result.append({
-                    "name": unit.name,
-                    "address": f"{unit.address}, {unit.number}, {unit.district}",
-                    "type": unit.kind,
-                    "rating": record.classification,
-                    "distance": distance
-                })
+            
+            result.append({
+                "name": unit.name,
+                "address": f"{unit.address}, {unit.number}, {unit.district}",
+                "type": unit.kind,
+                "distance": distance
+            })
         else:
             print(f"Unidade {record.cnes} não encontrada!")
 
-    return sorted(result, key=lambda x: x["distance"])
+    return sorted(result, key=lambda x: x["distance"])[:MAX_UNITIES]
 
 @app.get("/unidades/detalhes",
          summary="Obtém detalhes de uma unidade de saúde a partir do CNES",
