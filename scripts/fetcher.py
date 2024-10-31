@@ -22,22 +22,6 @@ DEMAS_URL = "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/"
 
 DATA_PATH = os.getenv("PYTHONPATH") + "/data/"
 
-
-def __download_data(url: str) -> bytes:
-    """
-    Downloads data from a URL using curl and returns the data in bytes.
-
-    Args:
-    url (str): URL of the file to be downloaded
-
-    Returns:
-    bytes: Downloaded data
-    """
-    result = subprocess.run(['curl', '-s', url],
-                            capture_output=True, check=True)
-    return result.stdout
-
-
 def __save_data(data: bytes, name: str) -> None:
     """
     Saves the data to a file with the desired name in the fetcher folder.
@@ -62,27 +46,6 @@ def __save_data(data: bytes, name: str) -> None:
     except OSError as e:
         print(f"Error saving data to {file_path}: {e}")
         raise
-
-
-def __unzip_cnes_data(date: str) -> None:
-    """
-    Extracts the one desired .csv file in the .zip downloaded from CNES
-
-    Args:
-    date (str): Date of the data to be extracted (YYYYMM)
-
-    Returns:
-    None
-    """
-    zip_path = os.path.join(DATA_PATH, f"BASE_DE_DADOS_CNES_{date}.zip")
-
-    if not os.path.exists(zip_path):
-        raise ValueError(
-            "There isn't any file with the specified name or date.")
-
-    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-        zip_ref.extract(f"{ESPEC_FILE_NAME}{date}.csv", DATA_PATH)
-
 
 def clean_cache() -> None:
     """

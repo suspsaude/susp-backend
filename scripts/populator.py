@@ -175,11 +175,11 @@ if __name__ == '__main__':
     
     if args.skip_to <= 3:
         print("[3] Populating service records")
-        #populate_service_records(elasticnes)
+        populate_service_records(elasticnes)
 
     if args.skip_to <= 4:
         print("[4] Populating general info")
-        #populate_general_info(elasticnes)
+        populate_general_info(elasticnes)
 
     if args.skip_to <= 5:
         print("[5] Cleaning cache")
