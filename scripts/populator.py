@@ -66,10 +66,11 @@ def populate_general_info(elasticnes: pd.DataFrame) -> None:
     """
     codes = set(elasticnes['CNES'])
     total = len(codes)
-    current = 1
+    current = 0
     startedAt = datetime.now()
 
     for cnes_code in codes:
+        current += 1
         progress_bar(current, total, startedAt, suffix=f"Downloading {cnes_code}")
         while True:
             try:
@@ -80,7 +81,6 @@ def populate_general_info(elasticnes: pd.DataFrame) -> None:
             break
         general_info = process_general_info(elasticnes, f"{DATA_PATH}/{cnes_code}.json")
         populate_db_from_object(general_info)
-        current += 1
         progress_bar(current, total, startedAt, suffix=cnes_code)
 
 def filter_dataframe(elasticnes: pd.DataFrame) -> pd.DataFrame:
@@ -153,25 +153,34 @@ def parse_args() -> argparse.Namespace:
 
     parser.add_argument("--year", type=int, required=True, help="Ano (formato: YYYY)")
     parser.add_argument("--month", type=int, required=True, help="Mês (formato: MM, 1 a 12)")
+    parser.add_argument("--skip-to", type=int, default=0, help="Pula para a etapa desejada")
 
     return parser.parse_args()
 
 if __name__ == '__main__':
     args = parse_args()
 
-    print("[0] Downloading data")
-    #download_cnes_data(args.year, args.month)
+    if args.skip_to <= 0:
+        print("[0] Downloading data")
+        download_cnes_data(args.year, args.month)
 
     # Reads .csv from ELASTICNES to a dataframe
-    print("[1] Reading data from file")
-    elasticnes = pd.read_csv(f"{DATA_PATH}DADOS_CNES.csv")
+    if args.skip_to <= 1:
+        print("[1] Reading data from file")
+        elasticnes = pd.read_csv(f"{DATA_PATH}DADOS_CNES.csv")
 
-    print("[2] Populating medical services")
-    #populate_medical_services(elasticnes)
-    print("[3] Populating service records")
-    #populate_service_records(elasticnes)
-    print("[4] Populating general info")
-    populate_general_info(elasticnes)
+    if args.skip_to <= 2:    
+        print("[2] Populating medical services")
+        populate_medical_services(elasticnes)
+    
+    if args.skip_to <= 3:
+        print("[3] Populating service records")
+        populate_service_records(elasticnes)
 
-    print("[5] Cleaning cache")
-    clean_cache()
+    if args.skip_to <= 4:
+        print("[4] Populating general info")
+        populate_general_info(elasticnes)
+
+    if args.skip_to <= 5:
+        print("[5] Cleaning cache")
+        clean_cache()

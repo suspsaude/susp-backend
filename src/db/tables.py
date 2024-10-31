@@ -1,6 +1,7 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Float
+from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
+from sqlalchemy.schema import ForeignKeyConstraint
 
 Base=declarative_base()
 
@@ -46,13 +47,17 @@ class MedicalService(Base):
     """MedicalService for a type of service.
 
     Args:
-        id (Integer): Medical service id
-        name (String): Description of the medical expertise
+        id (Integer): ID 'SERVIÇO' from the CNES API
+        class_id (Integer): ID 'SERVIÇO CLASSIFICAÇÃO' from the CNES API
+        service (String): 'SERVIÇO' description
+        classification (String): 'SERVIÇO CLASSIFICAÇÃO' description
     """
     __tablename__='medical_services'
 
     id=Column(Integer, primary_key=True)
-    name=Column(String)
+    class_id=Column(Integer, primary_key=True)
+    service=Column(String)
+    classification=Column(String)
 
 class ServiceRecord(Base):
     """ServiceRecord for a given CNES.
@@ -67,8 +72,11 @@ class ServiceRecord(Base):
     
     id=Column(Integer, primary_key=True, autoincrement=True)
     cnes=Column(Integer)
-    service=Column(Integer, ForeignKey('medical_services.id'))
+    service=Column(Integer)
     #description=Column(String)
-    classification=Column(String)
+    classification=Column(Integer)
     
+    __table_args__=(
+        ForeignKeyConstraint(['service', 'classification'], ['medical_services.id', 'medical_services.class_id']),
+    )
     medical_service=relationship("MedicalService")
