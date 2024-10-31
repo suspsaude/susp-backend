@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel, Field
 
+from typing import Optional, List, Dict
 from db.tables import Base, MedicalService, ServiceRecord, GeneralInfo
 from src.utils import get_address_from_cep, get_distance
 
@@ -44,9 +45,9 @@ async def root():
          response_description="Lista de especialidades",
          response_model=list[dict],
          description="""Retorna a lista de especialidades disponíveis para consulta. 
-         Consiste em uma lista de objetos do tipo `{id: [number, number], name: string}`. Onde `id` é o par de identificadores que identifica o SERVIÇO e o SERVIÇO CLASSIFICAÇÃO.
-         Esses identificadores são utilizados como atributos `id` e `cls`, respectivamente, em uma requisição para a rota `/unidades`.
-         """,
+            Consiste em uma lista de objetos do tipo `{id: [number, number], name: string}`. Onde `id` é o par de identificadores que identifica o SERVIÇO e o SERVIÇO CLASSIFICAÇÃO.
+            Esses identificadores são utilizados como atributos `id` e `cls`, respectivamente, em uma requisição para a rota `/unidades`.
+            """,
          responses={
             200: {
                 "description": "Lista de especialidades disponíveis", 
@@ -98,8 +99,9 @@ async def unidades(params: UnidadeRequest = Depends()):
                 {"latitude": latitude, "longitude": longitude},
                 {"latitude": unit.latitude, "longitude": unit.longitude}
             )
-            
+
             result.append({
+                "cnes": unit.cnes,
                 "name": unit.name,
                 "address": f"{unit.address}, {unit.number}, {unit.district}",
                 "type": unit.kind,
@@ -114,6 +116,47 @@ async def unidades(params: UnidadeRequest = Depends()):
          summary="Obtém detalhes de uma unidade de saúde a partir do CNES",
          response_description="Objeto com detalhes da unidade de saúde",
          response_model=dict,
+         description="""Retorna detalhes de uma unidade de saúde a partir do número CNES da unidade.
+            A requisição deve conter o parâmetro `cnes`, que é o número CNES da unidade de saúde.
+            A resposta consiste em um objeto com os detalhes da unidade de saúde, incluindo o nome, cidade, estado, tipo, CEP, CNPJ, endereço, número, bairro, telefone, latitude, longitude, e-mail, turno de atendimento e serviços oferecidos.
+            """,
          )
 async def detalhes(cnes: int):
-    return {"message": f"Não implementado ainda! Detalhes do CNES {cnes}"}
+    engine = create_engine(DB_URL)
+    session = sessionmaker(bind=engine)()
+
+    unit = session.query(GeneralInfo).filter(GeneralInfo.cnes == cnes).first()
+    unit_services = session.query(ServiceRecord).filter(ServiceRecord.cnes == cnes).all()
+
+    services_dict: Dict[str, List[str]] = {}
+
+    for unit_service in unit_services:
+        service = session.query(MedicalService).filter(
+            MedicalService.id == unit_service.service,
+            MedicalService.class_id == unit_service.classification
+        ).first()
+
+        if service.service not in services_dict:
+            services_dict[service.service] = []
+        services_dict[service.service].append(service.classification)
+
+    unit_dict = {
+        "cnes": unit.cnes,
+        "name": unit.name,
+        "city": unit.city,
+        "state": unit.state,
+        "kind": unit.kind,
+        "cep": unit.cep,
+        "cnpj": unit.cnpj,
+        "address": unit.address,
+        "number": unit.number,
+        "district": unit.district,
+        "telephone": unit.telephone,
+        "latitude": unit.latitude,
+        "longitude": unit.longitude,
+        "email": unit.email,
+        "shift": unit.shift,
+        "services": services_dict
+    }
+
+    return unit_dict
