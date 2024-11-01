@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from db.tables import Base, MedicalService, ServiceRecord, GeneralInfo
 from src.utils import get_address_from_cep, get_distance
+from fastapi.middleware.cors import CORSMiddleware
 
 description = """
 API para consulta de informações sobre unidades de saúde do SUS para a plataforma SUSP.
@@ -29,6 +30,14 @@ MAX_UNITIES = 20
 app = FastAPI(
     title="SUSP",
     description=description,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Permite apenas o frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 class UnidadeRequest(BaseModel):
