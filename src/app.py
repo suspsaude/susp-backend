@@ -1,6 +1,7 @@
 import os
 
 from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel, Field
@@ -30,6 +31,12 @@ app = FastAPI(
     title="SUSP",
     description=description,
 )
+
+app.add_middleware(CORSMiddleware, 
+                   allow_origins=["*"], 
+                   allow_credentials=True, 
+                   allow_methods=["*"], 
+                   allow_headers=["*"])
 
 class UnidadeRequest(BaseModel):
     cep: str = Field(..., pattern=r'^\d{5}-?\d{3}$', description="CEP no formato 00000-000")
