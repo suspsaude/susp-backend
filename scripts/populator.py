@@ -41,6 +41,12 @@ session = SessionLocal()
 # If tabelas doesn't exist, creates it
 Base.metadata.create_all(bind=engine)
 
+def db_is_populated() -> bool:
+    exists = session.query(GeneralInfo).first() is not None
+    if exists:
+        return True
+    return False
+
 def populate_db_from_object(obj: object) -> None:
     """
     Populates the database with the object passed as argument.
@@ -160,6 +166,10 @@ def parse_args() -> argparse.Namespace:
 if __name__ == '__main__':
     args = parse_args()
 
+    if db_is_populated():
+        print("Database already populated. Skipping population.")
+        exit(0)
+
     if args.skip_to <= 0:
         print("[0] Downloading data")
         download_cnes_data(args.year, args.month)
@@ -169,10 +179,10 @@ if __name__ == '__main__':
         print("[1] Reading data from file")
         elasticnes = pd.read_csv(f"{DATA_PATH}DADOS_CNES.csv")
 
-    if args.skip_to <= 2:    
+    if args.skip_to <= 2:
         print("[2] Populating medical services")
         populate_medical_services(elasticnes)
-    
+
     if args.skip_to <= 3:
         print("[3] Populating service records")
         populate_service_records(elasticnes)
