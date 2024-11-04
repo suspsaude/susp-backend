@@ -44,5 +44,19 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  populator:
+    build:
+      context: .
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=${DBNAME}
+      - POSTGRES_USER=${DBUSER}
+      - POSTGRES_PASSWORD=${DBPASS}
+      - PYTHONPATH=${PYTHONPATH}
+    entrypoint: ["python", "scripts/populator.py", "--year", "2024", "--month", "09"]
+    profiles: ["prod", "dev"]
+
 volumes:
   pgdata:
