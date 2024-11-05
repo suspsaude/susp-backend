@@ -4,6 +4,8 @@ from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -59,6 +61,11 @@ async def global_exception_handler(_, exc: Exception):
 #                                   ENDPOINTS
 # =============================================================================
 
+app.add_middleware(CORSMiddleware, 
+                   allow_origins=["*"], 
+                   allow_credentials=True, 
+                   allow_methods=["*"], 
+                   allow_headers=["*"])
 
 @app.get("/")
 async def root():
