@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from src.db.tables import Base, GeneralInfo, ServiceRecord, MedicalService
+from src.models.tables import Base, GeneralInfo, ServiceRecord, MedicalService
 from scripts.fetcher import DATA_PATH
 from scripts.fetcher import download_cnes_data, download_stablishment, clean_cache
 from scripts.process_sus_data import process_general_info, process_service_records, process_medical_services
