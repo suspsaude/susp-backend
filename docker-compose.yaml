@@ -3,10 +3,9 @@ services:
     build:
       context: .
     profiles: ["prod"]
-    ports:
-      - "8000:8000"
     depends_on:
       - db
+      - tailscale
     environment:
       - DEBUG=False
     env_file:
@@ -47,5 +46,25 @@ services:
       - .env
     entrypoint: ["python", "scripts/populator.py", "--year", "2024", "--month", "09"]
 
+  tailscale:
+    image: tailscale/tailscale:stable
+    hostname: suspbackend
+    profiles: ["prod"]
+    ports:
+      - "8000:8000"
+    volumes:
+      - tsdata:/var/lib
+      - /dev/net/tun:/dev/net/tun
+      - ${PWD}/deploy/config:/config
+    cap_add:
+      - net_admin
+      - sys_module
+    privileged: true
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY}
+      - TS_SERVE_CONFIG=/config/serve.json
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  tsdata:
