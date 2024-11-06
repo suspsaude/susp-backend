@@ -13,6 +13,7 @@ services:
       - POSTGRES_USER=${DBUSER}
       - POSTGRES_PASSWORD=${DBPASS}
       - PYTHONPATH=${PYTHONPATH}
+      - DEBUG=False
     command: ["fastapi", "run", "src/app.py", "--port", "8000", "--host", "0.0.0.0"]
 
   app-dev:
@@ -29,6 +30,7 @@ services:
       - POSTGRES_USER=${DBUSER}
       - POSTGRES_PASSWORD=${DBPASS}
       - PYTHONPATH=${PYTHONPATH}
+      - DEBUG=True
     command: ["fastapi", "dev", "src/app.py", "--port", "8000", "--host", "0.0.0.0"]
     volumes:
       - ./src:/app/src

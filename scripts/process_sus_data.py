@@ -12,7 +12,7 @@ from typing import TypedDict, Union
 from pprint import pprint
 import argparse
 
-from src.db.tables import GeneralInfo, ServiceRecord, MedicalService
+from src.models.tables import GeneralInfo, ServiceRecord, MedicalService
 
 def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dict, str]) -> GeneralInfo:
     """Joins the data from a elasticnes dataset row and a adasus request to
@@ -32,7 +32,7 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
         except Exception as e:
             print(f"Error loading JSON file {adasus}: {e}")
             return
-            
+
 
     elasticnes: pd.Series = elasticnes[elasticnes['CNES']
                                        == adasus['codigo_cnes']].iloc[0]
@@ -57,7 +57,7 @@ def process_general_info(elasticnes: Union[pd.DataFrame, str], adasus: Union[dic
 def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> list[MedicalService]:
     """Takes the elasticnes dataset and filters the medical services from it.
     A medical service is a tuple of (SERVIÇO, SERVIÇO CLASSIFICAÇÃO).
-    
+
     Args:
         elasticnes (DataFrame | str): the full elasticnes dataset or the name of the `.csv` file
     Returns:
@@ -71,11 +71,11 @@ def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> list[Medic
     medical_services = set([(service['SERVIÇO'], service['SERVIÇO CLASSIFICAÇÃO']) for service in data[['SERVIÇO', 'SERVIÇO CLASSIFICAÇÃO']].to_dict(orient='records')])
 
     processed: list[MedicalService] = []
-    
+
     for service in medical_services:
         [id, serv] = service[0].split(maxsplit=1)
         [class_id, cls] = service[1].split(maxsplit=1)
-        
+
         processed.append(MedicalService(
             id = int(int(id)),
             class_id = int(int(class_id)),
@@ -84,7 +84,7 @@ def process_medical_services(elasticnes: Union[pd.DataFrame, str]) -> list[Medic
         ))
 
     return processed
-    
+
 
 def process_service_records(elasticnes: Union[pd.DataFrame, str]) -> list[ServiceRecord]:
     """Filters useful service information from the elasticnes dataset and build
@@ -105,7 +105,7 @@ def process_service_records(elasticnes: Union[pd.DataFrame, str]) -> list[Servic
     services_table.columns = ['cnes', 'service', 'classification']
     services_list = services_table.to_dict(orient='records')
     services_records = [ServiceRecord(
-        cnes = service["cnes"], 
+        cnes = service["cnes"],
         service = int(service["service"].split(maxsplit=1)[0]),
         classification = int(service["classification"].split(maxsplit=1)[0])
         ) for service in services_list]
