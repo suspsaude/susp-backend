@@ -2,17 +2,16 @@ import logging
 import traceback
 from typing import List
 
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import JSONResponse
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from config.settings import DB_URL, DEBUG
 from src.models.endpoints import (DetailsResponse, ExpertiseItem, UnitItem,
                                   UnitRequest)
-from src.utils.helpers import get_address_from_cep
+from src.utils.helpers import get_coord_from_cep
 from src.utils.queries import (get_all_services, get_expertise_list,
                                get_near_unit_list, get_unit)
 
@@ -34,10 +33,23 @@ Endpoints disponíveis:
 app = FastAPI(
     title="SUSP",
     description=description,
+    debug=DEBUG,
 )
 engine = create_engine(DB_URL)
 session = sessionmaker(bind=engine)()
 logging.basicConfig(level="DEBUG" if DEBUG else "INFO")
+
+
+# =============================================================================
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # =============================================================================
@@ -48,7 +60,7 @@ async def global_exception_handler(_, exc: Exception):
     """
     Trata exceções não tratadas e retorna uma resposta JSON com o erro.
     """
-    logging.error(f"Error: {exc}")
+    logging.error("Error: %s", exc)
     logging.debug(traceback.format_exc())
 
     return JSONResponse(
@@ -61,11 +73,6 @@ async def global_exception_handler(_, exc: Exception):
 #                                   ENDPOINTS
 # =============================================================================
 
-app.add_middleware(CORSMiddleware, 
-                   allow_origins=["*"], 
-                   allow_credentials=True, 
-                   allow_methods=["*"], 
-                   allow_headers=["*"])
 
 @app.get("/")
 async def root():
@@ -102,7 +109,7 @@ async def root():
     },
 )
 async def expertises():
-    logging.debug("Expertise list request")
+    logging.info("Pedido de especialidades")
     return get_expertise_list(session)
 
 
@@ -120,9 +127,8 @@ async def expertises():
             """,
 )
 async def units(params: UnitRequest = Depends()):
-    logging.debug(f"Unit list request: {params}")
-    (latitude, longitude) = get_address_from_cep(params.cep)
-    return get_near_unit_list(session, params, latitude, longitude)
+    origin = get_coord_from_cep(params.cep)
+    return get_near_unit_list(session, params, origin)
 
 
 # =============================================================================
@@ -139,7 +145,6 @@ async def units(params: UnitRequest = Depends()):
             """,
 )
 async def details(cnes: int):
-    logging.debug(f"Details request: {cnes}")
     unit = get_unit(session, cnes)
     services_dict = get_all_services(session, cnes)
 

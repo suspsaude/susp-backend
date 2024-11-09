@@ -1,5 +1,8 @@
 -r requirements.txt
-sqlalchemy-stubs>=0.4
-types-requests>=2.32
-mypy>=1.13.0
-sqlalchemy2-stubs>=0.0.2a38
+sqlalchemy-stubs >= 0.4
+types-requests >= 2.32
+sqlalchemy2-stubs >= 0.0.2a38
+pytest ~= 8.3.3
+isort ~= 5.13.2
+black ~= 24.10.0
+pylint ~= 3.3.1
