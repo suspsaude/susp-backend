@@ -8,13 +8,10 @@ services:
     depends_on:
       - db
     environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=${DBNAME}
-      - POSTGRES_USER=${DBUSER}
-      - POSTGRES_PASSWORD=${DBPASS}
-      - PYTHONPATH=${PYTHONPATH}
       - DEBUG=False
-    command: ["fastapi", "run", "src/app.py", "--port", "8000", "--host", "0.0.0.0"]
+    env_file:
+      - .env
+    command: ["uvicorn", "src.app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
 
   app-dev:
     build:
@@ -25,40 +22,30 @@ services:
     depends_on:
       - db
     environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=${DBNAME}
-      - POSTGRES_USER=${DBUSER}
-      - POSTGRES_PASSWORD=${DBPASS}
-      - PYTHONPATH=${PYTHONPATH}
       - DEBUG=True
     command: ["fastapi", "dev", "src/app.py", "--port", "8000", "--host", "0.0.0.0"]
     volumes:
       - ./src:/app/src
       - ./scripts:/app/scripts
+      - ./config:/app/config
 
   db:
     image: postgres:14.2-alpine
     profiles: ["prod", "dev"]
-    environment:
-      - POSTGRES_DB=${DBNAME}
-      - POSTGRES_USER=${DBUSER}
-      - POSTGRES_PASSWORD=${DBPASS}
+    env_file:
+      - .env
     volumes:
       - pgdata:/var/lib/postgresql/data
 
   populator:
     build:
       context: .
+    profiles: ["prod", "dev"]
     depends_on:
       - db
-    environment:
-      - POSTGRES_HOST=db
-      - POSTGRES_DB=${DBNAME}
-      - POSTGRES_USER=${DBUSER}
-      - POSTGRES_PASSWORD=${DBPASS}
-      - PYTHONPATH=${PYTHONPATH}
+    env_file:
+      - .env
     entrypoint: ["python", "scripts/populator.py", "--year", "2024", "--month", "09"]
-    profiles: ["prod", "dev"]
 
 volumes:
   pgdata:
